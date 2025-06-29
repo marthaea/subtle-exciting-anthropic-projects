@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Particle Symphony</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            height: 100vh;
+        }
+
+        canvas {
+            display: block;
+            cursor: none;
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .mode-btn {
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            min-width: 140px;
+        }
+
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .mode-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .title {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .particle-count {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="controls">
+        <button class="mode-btn active" data-mode="random">Random Flow</button>
+        <button class="mode-btn" data-mode="cursor">Follow Cursor</button>
+        <button class="mode-btn" data-mode="falling">Sky Rain</button>
+        <button class="mode-btn" data-mode="spiral">Spiral Dance</button>
+        <button class="mode-btn" data-mode="wave">Ocean Waves</button>
+        <button class="mode-btn" data-mode="orbit">Orbital System</button>
+        <button class="mode-btn" data-mode="fireflies">Fireflies</button>
+        <button class="mode-btn" data-mode="galaxy">Galaxy Swirl</button>
+    </div>
+    
+    <div class="title">PARTICLE SYMPHONY</div>
+    <div class="particle-count" id="particleCount">Particles: 0</div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Delicate color palette
+        const colors = [
+            'rgba(255, 182, 193, 0.8)', // Light pink
+            'rgba(173, 216, 230, 0.8)', // Light blue
+            'rgba(221, 160, 221, 0.8)', // Plum
+            'rgba(240, 230, 140, 0.8)', // Khaki
+            'rgba(152, 251, 152, 0.8)', // Pale green
+            'rgba(255, 218, 185, 0.8)', // Peach
+            'rgba(230, 230, 250, 0.8)', // Lavender
+            'rgba(255, 240, 245, 0.8)', // Lavender blush
+        ];
+
+        let particles = [];
+        let mode = 'random';
+        let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        let animationId;
+        let time = 0;
+        let centerX, centerY;
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.speedX = (Math.random() - 0.5) * 2;
+                this.speedY = (Math.random() - 0.5) * 2;
+                this.life = 1;
+                this.decay = Math.random() * 0.02 + 0.005;
+                this.originalSize = this.size;
+                this.angle = Math.random() * Math.PI * 2;
+                this.angleSpeed = (Math.random() - 0.5) * 0.02;
+                this.orbitRadius = Math.random() * 150 + 50;
+                this.orbitSpeed = (Math.random() - 0.5) * 0.01;
+                this.baseX = this.x;
+                this.baseY = this.y;
+                this.pulsePhase = Math.random() * Math.PI * 2;
+            }
+
+            update() {
+                this.angle += this.angleSpeed;
+                this.pulsePhase += 0.02;
+                
+                if (mode === 'random') {
+                    this.speedX += (Math.random() - 0.5) * 0.1;
+                    this.speedY += (Math.random() - 0.5) * 0.1;
+                    this.speedX *= 0.99;
+                    this.speedY *= 0.99;
+                    
+                    this.x += this.speedX + Math.sin(this.angle) * 0.5;
+                    this.y += this.speedY + Math.cos(this.angle) * 0.5;
+                    
+                } else if (mode === 'cursor') {
+                    const dx = mouse.x - this.x;
+                    const dy = mouse.y - this.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance > 100) {
+                        this.speedX += dx * 0.0005;
+                        this.speedY += dy * 0.0005;
+                    } else {
+                        this.speedX += (Math.random() - 0.5) * 0.2;
+                        this.speedY += (Math.random() - 0.5) * 0.2;
+                    }
+                    
+                    this.speedX *= 0.95;
+                    this.speedY *= 0.95;
+                    
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    
+                } else if (mode === 'falling') {
+                    this.speedY += 0.1;
+                    this.speedX += (Math.random() - 0.5) * 0.05;
+                    this.speedX *= 0.99;
+                    
+                    this.x += this.speedX + Math.sin(this.angle) * 0.3;
+                    this.y += this.speedY;
+                    
+                    if (this.y > canvas.height + 50) {
+                        this.y = -50;
+                        this.x = Math.random() * canvas.width;
+                        this.speedY = Math.random() * 2 + 1;
+                    }
+                    
+                } else if (mode === 'spiral') {
+                    const spiralSpeed = 0.02;
+                    this.angle += spiralSpeed;
+                    centerX = centerX || canvas.width / 2;
+                    centerY = centerY || canvas.height / 2;
+                    const radius = Math.sin(time * 0.01 + this.pulsePhase) * 50 + 100;
+                    
+                    this.x = centerX + Math.cos(this.angle) * radius;
+                    this.y = centerY + Math.sin(this.angle) * radius;
+                    
+                    // Add some drift to the spiral center
+                    this.x += Math.sin(time * 0.005 + this.pulsePhase) * 20;
+                    this.y += Math.cos(time * 0.003 + this.pulsePhase) * 15;
+                    
+                } else if (mode === 'wave') {
+                    this.speedX = this.speedX || 1.5;
+                    this.x += this.speedX;
+                    const waveHeight = 60;
+                    const waveFreq = 0.01;
+                    this.baseY = this.baseY || canvas.height / 2;
+                    this.y = this.baseY + Math.sin(this.x * waveFreq + time * 0.05) * waveHeight;
+                    this.y += Math.sin(time * 0.02 + this.pulsePhase) * 20;
+                    
+                    if (this.x > canvas.width + 50) {
+                        this.x = -50;
+                        this.baseY = Math.random() * canvas.height;
+                    }
+                    
+                } else if (mode === 'orbit') {
+                    this.angle += this.orbitSpeed;
+                    const orbitX = centerX + Math.cos(this.angle) * this.orbitRadius;
+                    const orbitY = centerY + Math.sin(this.angle) * this.orbitRadius * 0.6;
+                    
+                    this.x += (orbitX - this.x) * 0.05;
+                    this.y += (orbitY - this.y) * 0.05;
+                    
+                    // Add some orbital wobble
+                    this.x += Math.sin(time * 0.01 + this.pulsePhase) * 10;
+                    this.y += Math.cos(time * 0.015 + this.pulsePhase) * 8;
+                    
+                } else if (mode === 'fireflies') {
+                    // Gentle floating motion
+                    this.speedX += (Math.random() - 0.5) * 0.05;
+                    this.speedY += (Math.random() - 0.5) * 0.05;
+                    this.speedX *= 0.98;
+                    this.speedY *= 0.98;
+                    
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    
+                    // Pulsing brightness effect
+                    this.size = this.originalSize * (0.5 + Math.sin(this.pulsePhase) * 0.5);
+                    
+                } else if (mode === 'galaxy') {
+                    // Galaxy spiral motion
+                    const galaxySpeed = 0.005;
+                    const distanceFromCenter = Math.sqrt(
+                        Math.pow(this.x - centerX, 2) + Math.pow(this.y - centerY, 2)
+                    );
+                    
+                    this.angle += galaxySpeed * (200 / (distanceFromCenter + 50));
+                    
+                    const newX = centerX + (this.x - centerX) * Math.cos(galaxySpeed) - (this.y - centerY) * Math.sin(galaxySpeed);
+                    const newY = centerY + (this.x - centerX) * Math.sin(galaxySpeed) + (this.y - centerY) * Math.cos(galaxySpeed);
+                    
+                    this.x = newX;
+                    this.y = newY;
+                    
+                    // Slowly spiral inward
+                    this.x += (centerX - this.x) * 0.001;
+                    this.y += (centerY - this.y) * 0.001;
+                    
+                    // Add some random motion
+                    this.x += (Math.random() - 0.5) * 0.5;
+                    this.y += (Math.random() - 0.5) * 0.5;
+                }
+
+                // Boundary wrapping for most modes
+                if (['random', 'cursor', 'fireflies'].includes(mode)) {
+                    if (this.x < -50) this.x = canvas.width + 50;
+                    if (this.x > canvas.width + 50) this.x = -50;
+                    if (this.y < -50) this.y = canvas.height + 50;
+                    if (this.y > canvas.height + 50) this.y = -50;
+                }
+
+                // Reset particles that drift too far in galaxy mode
+                if (mode === 'galaxy') {
+                    const distanceFromCenter = Math.sqrt(
+                        Math.pow(this.x - centerX, 2) + Math.pow(this.y - centerY, 2)
+                    );
+                    if (distanceFromCenter < 20) {
+                        this.reset();
+                    }
+                }
+
+                // Life cycle (disabled for some modes)
+                if (!['spiral', 'orbit', 'galaxy'].includes(mode)) {
+                    this.life -= this.decay;
+                    this.size = this.originalSize * this.life;
+
+                    if (this.life <= 0) {
+                        this.reset();
+                    }
+                }
+            }
+
+            reset() {
+                if (mode === 'falling') {
+                    this.x = Math.random() * canvas.width;
+                    this.y = -50;
+                } else if (mode === 'wave') {
+                    this.x = -50;
+                    this.baseY = Math.random() * canvas.height;
+                    this.y = this.baseY;
+                } else if (mode === 'spiral' || mode === 'orbit' || mode === 'galaxy') {
+                    // For these modes, reset to edge of screen
+                    const side = Math.floor(Math.random() * 4);
+                    switch(side) {
+                        case 0: // top
+                            this.x = Math.random() * canvas.width;
+                            this.y = -50;
+                            break;
+                        case 1: // right
+                            this.x = canvas.width + 50;
+                            this.y = Math.random() * canvas.height;
+                            break;
+                        case 2: // bottom
+                            this.x = Math.random() * canvas.width;
+                            this.y = canvas.height + 50;
+                            break;
+                        case 3: // left
+                            this.x = -50;
+                            this.y = Math.random() * canvas.height;
+                            break;
+                    }
+                } else {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                }
+                
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.life = 1;
+                this.size = Math.random() * 3 + 1;
+                this.originalSize = this.size;
+                this.speedX = (Math.random() - 0.5) * 2;
+                this.speedY = mode === 'falling' ? Math.random() * 2 + 1 : (Math.random() - 0.5) * 2;
+                this.orbitRadius = Math.random() * 150 + 50;
+                this.orbitSpeed = (Math.random() - 0.5) * 0.01;
+                this.baseX = this.x;
+                this.baseY = this.y;
+                this.pulsePhase = Math.random() * Math.PI * 2;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.beginPath();
+                
+                // Create gradient for each particle
+                const gradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.size * 2
+                );
+                gradient.addColorStop(0, this.color);
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add inner glow
+                ctx.beginPath();
+                ctx.fillStyle = this.color.replace('0.8', '1');
+                ctx.arc(this.x, this.y, this.size * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        // Initialize particles
+        function initParticles() {
+            particles = [];
+            centerX = canvas.width / 2;
+            centerY = canvas.height / 2;
+            
+            let particleCount = 150;
+            if (mode === 'galaxy') particleCount = 200;
+            if (mode === 'fireflies') particleCount = 80;
+            
+            for (let i = 0; i < particleCount; i++) {
+                let particle;
+                if (mode === 'falling') {
+                    particle = new Particle(Math.random() * canvas.width, Math.random() * -canvas.height);
+                } else if (mode === 'wave') {
+                    particle = new Particle(-50, Math.random() * canvas.height);
+                    particle.baseY = particle.y;
+                    particle.speedX = Math.random() * 2 + 1;
+                } else if (mode === 'spiral') {
+                    const angle = (i / particleCount) * Math.PI * 4;
+                    const radius = (i / particleCount) * 200 + 50;
+                    particle = new Particle(
+                        centerX + Math.cos(angle) * radius,
+                        centerY + Math.sin(angle) * radius
+                    );
+                } else if (mode === 'orbit') {
+                    const angle = (i / particleCount) * Math.PI * 2;
+                    const radius = Math.random() * 200 + 50;
+                    particle = new Particle(
+                        centerX + Math.cos(angle) * radius,
+                        centerY + Math.sin(angle) * radius * 0.6
+                    );
+                    particle.orbitRadius = radius;
+                    particle.angle = angle;
+                } else if (mode === 'galaxy') {
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = Math.random() * 300 + 100;
+                    particle = new Particle(
+                        centerX + Math.cos(angle) * radius,
+                        centerY + Math.sin(angle) * radius
+                    );
+                } else {
+                    particle = new Particle();
+                }
+                particles.push(particle);
+            }
+        }
+
+        // Animation loop
+        function animate() {
+            time++;
+            centerX = canvas.width / 2;
+            centerY = canvas.height / 2;
+            
+            // Clear with subtle trail effect
+            ctx.fillStyle = 'rgba(102, 126, 234, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw particles
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            // Update particle count
+            document.getElementById('particleCount').textContent = `Particles: ${particles.length}`;
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // Mouse tracking
+        canvas.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        // Mode switching
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all buttons
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
+                btn.classList.add('active');
+                
+                mode = btn.dataset.mode;
+                initParticles();
+            });
+        });
+
+        // Add particles on click
+        canvas.addEventListener('click', (e) => {
+            for (let i = 0; i < 10; i++) {
+                particles.push(new Particle(
+                    e.clientX + (Math.random() - 0.5) * 50,
+                    e.clientY + (Math.random() - 0.5) * 50
+                ));
+            }
+        });
+
+        // Initialize and start
+        initParticles();
+        animate();
+
+        // Add touch support for mobile
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            mouse.x = touch.clientX;
+            mouse.y = touch.clientY;
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            for (let i = 0; i < 5; i++) {
+                particles.push(new Particle(
+                    touch.clientX + (Math.random() - 0.5) * 30,
+                    touch.clientY + (Math.random() - 0.5) * 30
+                ));
+            }
+        });
+    </script>
+</body>
+</html>

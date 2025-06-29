@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Networking Flashcards</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.4);
+        }
+
+        .btn-accent {
+            background: linear-gradient(45deg, #ffeaa7, #fdcb6e);
+            color: #2d3436;
+            box-shadow: 0 4px 15px rgba(255, 234, 167, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .flashcard-container {
+            perspective: 1000px;
+            margin-bottom: 30px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 400px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s ease;
+            cursor: pointer;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            background: rgba(255, 255, 255, 0.98);
+        }
+
+        .card-content h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #2d3436;
+            line-height: 1.4;
+        }
+
+        .card-content p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #636e72;
+        }
+
+        .card-content ul {
+            text-align: left;
+            margin: 15px 0;
+        }
+
+        .card-content li {
+            margin: 8px 0;
+            color: #636e72;
+        }
+
+        .card-content strong {
+            color: #2d3436;
+            font-weight: 600;
+        }
+
+        .card-content ol {
+            text-align: left;
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+
+        .card-content ol li {
+            margin: 10px 0;
+        }
+
+        .progress {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 5px;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            background: linear-gradient(45deg, #00b894, #00cec9);
+            height: 20px;
+            border-radius: 20px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .category-filter {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .category-btn {
+            padding: 8px 16px;
+            margin: 5px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-btn.active,
+        .category-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .flashcard {
+                height: 350px;
+            }
+            
+            .card-face {
+                padding: 20px;
+            }
+            
+            .card-content h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 Advanced Networking Flashcards</h1>
+            <p>Master key networking concepts and protocols</p>
+        </div>
+
+        <div class="progress">
+            <div class="progress-bar" id="progressBar">0 / 0</div>
+        </div>
+
+        <div class="category-filter">
+            <button class="category-btn active" onclick="filterCategory('all')">All</button>
+            <button class="category-btn" onclick="filterCategory('protocols')">Protocols</button>
+            <button class="category-btn" onclick="filterCategory('routing')">Routing</button>
+            <button class="category-btn" onclick="filterCategory('security')">Security</button>
+            <button class="category-btn" onclick="filterCategory('qos')">QoS</button>
+            <button class="category-btn" onclick="filterCategory('switching')">Switching</button>
+            <button class="category-btn" onclick="filterCategory('cisco')">Cisco Config</button>
+            <button class="category-btn" onclick="filterCategory('troubleshooting')">Troubleshooting</button>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="prevCard()">← Previous</button>
+            <button class="btn btn-secondary" onclick="flipCard()">Flip Card</button>
+            <button class="btn btn-primary" onclick="nextCard()">Next →</button>
+            <button class="btn btn-accent" onclick="shuffleCards()">🔀 Shuffle</button>
+        </div>
+
+        <div class="flashcard-container">
+            <div class="flashcard" id="flashcard" onclick="flipCard()">
+                <div class="card-face">
+                    <div class="card-content" id="frontContent">
+                        <h2>Loading...</h2>
+                    </div>
+                </div>
+                <div class="card-face card-back">
+                    <div class="card-content" id="backContent">
+                        <p>Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-number" id="currentCard">1</span>
+                <span>Current Card</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="totalCards">0</span>
+                <span>Total Cards</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="studiedCards">0</span>
+                <span>Studied</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const flashcards = [
+            {
+                category: 'protocols',
+                front: 'What is BGP and what is its primary purpose?',
+                back: 'Border Gateway Protocol (BGP) is the standard exterior gateway protocol used to exchange routing information between autonomous systems (AS) on the Internet. It is a path-vector protocol that makes routing decisions based on paths, network policies, and rule-sets configured by network administrators.'
+            },
+            {
+                category: 'protocols',
+                front: 'Explain the difference between TCP and UDP',
+                back: 'TCP (Transmission Control Protocol) is connection-oriented, reliable, and provides error checking, flow control, and ordered delivery. UDP (User Datagram Protocol) is connectionless, unreliable but faster, with minimal overhead and no guaranteed delivery or ordering.'
+            },
+            {
+                category: 'routing',
+                front: 'What is OSPF and how does it work?',
+                back: 'Open Shortest Path First (OSPF) is a link-state routing protocol that uses Dijkstra\'s algorithm to calculate the shortest path. It maintains a topology database, floods link-state advertisements (LSAs), and supports hierarchical design with areas to reduce routing overhead.'
+            },
+            {
+                category: 'routing',
+                front: 'Describe the concept of Route Redistribution',
+                back: 'Route redistribution is the process of taking routes learned from one routing protocol and injecting them into another routing protocol. This allows networks using different routing protocols to communicate, but requires careful configuration to prevent routing loops and suboptimal paths.'
+            },
+            {
+                category: 'switching',
+                front: 'What is VLAN and what are its benefits?',
+                back: 'Virtual LAN (VLAN) is a logical grouping of devices on different physical network segments. Benefits include: improved security through broadcast domain separation, better traffic management, simplified moves/adds/changes, and reduced network congestion.'
+            },
+            {
+                category: 'switching',
+                front: 'Explain Spanning Tree Protocol (STP)',
+                back: 'STP prevents loops in redundant switched networks by blocking redundant paths and creating a loop-free logical topology. It elects a root bridge, calculates port costs, and places ports in forwarding or blocking states. RSTP and MSTP are modern improvements.'
+            },
+            {
+                category: 'security',
+                front: 'What is IPSec and what are its two main modes?',
+                back: 'IPSec is a protocol suite for securing IP communications through authentication and encryption. Two modes: Transport mode (encrypts only payload, used for end-to-end communication) and Tunnel mode (encrypts entire IP packet, used for VPN connections).'
+            },
+            {
+                category: 'security',
+                front: 'Describe Network Address Translation (NAT) and its types',
+                back: 'NAT translates private IP addresses to public IP addresses. Types: Static NAT (one-to-one mapping), Dynamic NAT (pool of public IPs), PAT/NAPT (Port Address Translation - many-to-one with port numbers). Provides security and conserves public IP addresses.'
+            },
+            {
+                category: 'qos',
+                front: 'What is Quality of Service (QoS) and why is it important?',
+                back: 'QoS is a set of technologies that manage network traffic to ensure acceptable performance for critical applications. Important for: prioritizing time-sensitive traffic (voice/video), managing bandwidth allocation, reducing latency and jitter, and preventing network congestion.'
+            },
+            {
+                category: 'qos',
+                front: 'Explain the DiffServ model for QoS',
+                back: 'Differentiated Services (DiffServ) uses the DSCP field in IP headers to classify and mark packets into service classes. It provides scalable QoS through per-hop behaviors (PHBs) like Expedited Forwarding (EF) for low-latency traffic and Assured Forwarding (AF) for guaranteed bandwidth.'
+            },
+            {
+                category: 'protocols',
+                front: 'What is MPLS and how does it improve network performance?',
+                back: 'Multiprotocol Label Switching (MPLS) uses labels to forward packets instead of IP lookups. Benefits: faster forwarding, traffic engineering capabilities, VPN support, and QoS implementation. Labels are added at ingress and removed at egress routers.'
+            },
+            {
+                category: 'routing',
+                front: 'Describe the concept of Administrative Distance',
+                back: 'Administrative Distance (AD) is a rating of trustworthiness for routing information sources. Lower values are preferred. Common values: Connected (0), Static (1), EIGRP (90), OSPF (110), RIP (120), External EIGRP (170), iBGP (200), eBGP (20).'
+            },
+            {
+                category: 'switching',
+                front: 'What is EtherChannel and what are its benefits?',
+                back: 'EtherChannel bundles multiple physical links into a single logical link between switches. Benefits: increased bandwidth, load balancing, redundancy, and loop prevention. Protocols include PAgP (Cisco proprietary) and LACP (IEEE 802.3ad standard).'
+            },
+            {
+                category: 'protocols',
+                front: 'Explain the concept of Subnetting and CIDR',
+                back: 'Subnetting divides networks into smaller subnetworks for better organization and security. CIDR (Classless Inter-Domain Routing) uses variable-length subnet masks, written as network/prefix (e.g., 192.168.1.0/24). Enables efficient IP address allocation and route aggregation.'
+            },
+            {
+                category: 'security',
+                front: 'What are Access Control Lists (ACLs) and their types?',
+                back: 'ACLs are rules that permit or deny network traffic based on various criteria. Types: Standard ACLs (source IP only), Extended ACLs (source/destination IP, ports, protocols), Named ACLs (easier management). Applied inbound or outbound on interfaces.'
+            },
+            {
+                category: 'routing',
+                front: 'Describe EIGRP and its key features',
+                back: 'Enhanced Interior Gateway Routing Protocol (EIGRP) is Cisco\'s advanced distance-vector protocol. Features: fast convergence, unequal-cost load balancing, DUAL algorithm for loop-free paths, support for multiple protocols, and efficient use of bandwidth with incremental updates.'
+            },
+            {
+                category: 'protocols',
+                front: 'What is DNS and how does it work?',
+                back: 'Domain Name System (DNS) translates human-readable domain names to IP addresses. Works through a hierarchical system: root servers, TLD servers, authoritative servers. Uses recursive and iterative queries, caching for performance, and various record types (A, AAAA, MX, CNAME, etc.).'
+            },
+            {
+                category: 'switching',
+                front: 'Explain VTP (VLAN Trunking Protocol)',
+                back: 'VTP manages VLAN configuration across multiple switches in a domain. Modes: Server (can create/modify VLANs), Client (receives VLAN info), Transparent (forwards VTP messages but maintains local VLAN database). Uses revision numbers to synchronize VLAN databases.'
+            },
+            {
+                category: 'security',
+                front: 'What is a DMZ and why is it used?',
+                back: 'Demilitarized Zone (DMZ) is a network segment that sits between internal and external networks. Contains publicly accessible servers (web, email, DNS) while protecting internal network. Provides additional security layer and controlled access to public services.'
+            },
+            {
+                category: 'qos',
+                front: 'Describe Traffic Shaping vs Traffic Policing',
+                back: 'Traffic Shaping: buffers excess traffic and smooths traffic flow, adding delay but reducing drops. Traffic Policing: drops or marks excess traffic immediately, no buffering. Shaping is typically used on outbound interfaces, policing on inbound interfaces.'
+            },
+            {
+                category: 'cisco',
+                front: 'Configure a basic router interface with IP address',
+                back: `<pre>Router(config)# interface gigabitethernet 0/0
+Router(config-if)# ip address 192.168.1.1 255.255.255.0
+Router(config-if)# no shutdown
+Router(config-if)# description LAN Interface
+Router(config-if)# exit</pre>`
+            },
+            {
+                category: 'cisco',
+                front: 'Configure a static route on a Cisco router',
+                back: `<pre>Router(config)# ip route 10.0.0.0 255.0.0.0 192.168.1.2
+Router(config)# ip route 0.0.0.0 0.0.0.0 203.0.113.1
+# First command: route to 10.0.0.0/8 via 192.168.1.2
+# Second command: default route via 203.0.113.1</pre>`
+            },
+            {
+                category: 'cisco',
+                front: 'Configure OSPF on a Cisco router',
+                back: `<pre>Router(config)# router ospf 1
+Router(config-router)# router-id 1.1.1.1
+Router(config-router)# network 192.168.1.0 0.0.0.255 area 0
+Router(config-router)# network 10.0.0.0 0.255.255.255 area 1
+Router(config-router)# passive-interface fastethernet 0/1</pre>`
+            },
+            {
+                category: 'cisco',
+                front: 'Configure VLANs on a Cisco switch',
+                back: `<pre>Switch(config)# vlan 10
+Switch(config-vlan)# name Sales
+Switch(config-vlan)# vlan 20
+Switch(config-vlan)# name Engineering
+Switch(config-vlan)# exit
+Switch(config)# interface fastethernet 0/1
+Switch(config-if)# switchport mode access
+Switch(config-if)# switchport access vlan 10</pre>`
+            },
+            {
+                category: 'cisco',
+                front: 'Configure trunk port on Cisco switch',
+                back: `<pre>Switch(config)# interface gigabitethernet 0/1
+Switch(config-if)# switchport mode trunk
+Switch(config-if)# switchport trunk allowed vlan 10,20,30
+Switch(config-if)# switchport trunk native vlan 99
+Switch(config-if)# no shutdown</pre>`
+            },
+            {
+                category: 'cisco',
+                front: 'Configure DHCP server on Cisco router',
+                back: `<pre>Router(config)# ip dhcp excluded-address 192.168.1.1 192.168.1.10
+Router(config)# ip dhcp pool LAN_POOL
+Router(dhcp-config)# network 192.168.1.0 255.255.255.0
+Router(dhcp-config)# default-router 192.168.1.1
+Router(dhcp-config)# dns-server 8.8.8.8 8.8.4.4
+Router(dhcp-config)# lease 7</pre>`
+            },
+            {
+                category: 'cisco',
+                front: 'Configure NAT (PAT) on Cisco router',
+                back: `<pre>Router(config)# access-list 1 permit 192.168.1.0 0.0.0.255
+Router(config)# ip nat inside source list 1 interface serial 0/0 overload
+Router(config)# interface fastethernet 0/0
+Router(config-if)# ip nat inside
+Router(config)# interface serial 0/0
+Router(config-if)# ip nat outside</pre>`
+            },
+            {
+                category: 'cisco',
+                front: 'Configure extended ACL on Cisco router',
+                back: `<pre>Router(config)# ip access-list extended WEB_FILTER
+Router(config-ext-nacl)# permit tcp 192.168.1.0 0.0.0.255 any eq 80
+Router(config-ext-nacl)# permit tcp 192.168.1.0 0.0.0.255 any eq 443
+Router(config-ext-nacl)# deny ip 192.168.1.0 0.0.0.255 any
+Router(config)# interface fastethernet 0/0
+Router(config-if)# ip access-group WEB_FILTER in</pre>`
+            },
+            {
+                category: 'cisco',
+                front: 'Configure EIGRP on Cisco router',
+                back: `<pre>Router(config)# router eigrp 100
+Router(config-router)# network 192.168.1.0 0.0.0.255
+Router(config-router)# network 10.0.0.0 0.255.255.255
+Router(config-router)# passive-interface fastethernet 0/1
+Router(config-router)# auto-summary
+Router(config-router)# eigrp router-id 1.1.1.1</pre>`
+            },
+            {
+                category: 'cisco',
+                front: 'Configure EtherChannel (LACP) on Cisco switch',
+                back: `<pre>Switch(config)# interface range fastethernet 0/1-2
+Switch(config-if-range)# channel-group 1 mode active
+Switch(config-if-range)# exit
+Switch(config)# interface port-channel 1
+Switch(config-if)# switchport mode trunk
+Switch(config-if)# switchport trunk allowed vlan all</pre>`
+            },
+            {
+                category: 'cisco',
+                front: 'Configure Spanning Tree Protocol settings',
+                back: `<pre>Switch(config)# spanning-tree mode rapid-pvst
+Switch(config)# spanning-tree vlan 1 priority 4096
+Switch(config)# interface fastethernet 0/24
+Switch(config-if)# spanning-tree portfast
+Switch(config-if)# spanning-tree bpduguard enable
+Switch(config-if)# spanning-tree cost 10</pre>`
+            },
+            {
+                category: 'cisco',
+                front: 'Configure SSH access on Cisco device',
+                back: `<pre>Router(config)# hostname R1
+Router(config)# ip domain-name company.com
+Router(config)# username admin privilege 15 secret cisco123
+Router(config)# crypto key generate rsa modulus 1024
+Router(config)# line vty 0 4
+Router(config-line)# transport input ssh
+Router(config-line)# login local</pre>`
+            },
+            {
+                category: 'cisco',
+                front: 'Configure Inter-VLAN routing (Router-on-a-Stick)',
+                back: `<pre>Router(config)# interface gigabitethernet 0/0
+Router(config-if)# no shutdown
+Router(config)# interface gigabitethernet 0/0.10
+Router(config-subif)# encapsulation dot1q 10
+Router(config-subif)# ip address 192.168.10.1 255.255.255.0
+Router(config)# interface gigabitethernet 0/0.20
+Router(config-subif)# encapsulation dot1q 20
+Router(config-subif)# ip address 192.168.20.1 255.255.255.0</pre>`
+            },
+            {
+                category: 'troubleshooting',
+                front: 'What show commands help troubleshoot OSPF issues?',
+                back: `<ul>
+<li><strong>show ip ospf neighbor</strong> - Check neighbor relationships</li>
+<li><strong>show ip ospf database</strong> - View LSA database</li>
+<li><strong>show ip route ospf</strong> - See OSPF routes in routing table</li>
+<li><strong>show ip ospf interface</strong> - Check OSPF interface status</li>
+<li><strong>debug ip ospf events</strong> - Real-time OSPF events</li>
+</ul>`
+            },
+            {
+                category: 'troubleshooting',
+                front: 'How to troubleshoot VLAN connectivity issues?',
+                back: `<ol>
+<li><strong>show vlan brief</strong> - Verify VLAN configuration</li>
+<li><strong>show interfaces trunk</strong> - Check trunk configuration</li>
+<li><strong>show interfaces switchport</strong> - Verify port settings</li>
+<li><strong>show spanning-tree</strong> - Check for blocked ports</li>
+<li><strong>show mac address-table</strong> - Verify MAC learning</li>
+<li>Check for VLAN mismatch on trunk links</li>
+</ol>`
+            },
+            {
+                category: 'troubleshooting',
+                front: 'Common NAT troubleshooting commands and issues',
+                back: `<strong>Commands:</strong>
+<ul>
+<li><strong>show ip nat translations</strong> - View active translations</li>
+<li><strong>show ip nat statistics</strong> - Check NAT statistics</li>
+<li><strong>debug ip nat</strong> - Real-time NAT translations</li>
+</ul>
+<strong>Common Issues:</strong> Inside/outside interfaces not configured, ACL not matching traffic, insufficient public IPs`
+            },
+            {
+                category: 'troubleshooting',
+                front: 'How to verify and troubleshoot DHCP functionality?',
+                back: `<ul>
+<li><strong>show ip dhcp binding</strong> - View active DHCP leases</li>
+<li><strong>show ip dhcp pool</strong> - Check pool configuration</li>
+<li><strong>show ip dhcp conflict</strong> - View IP conflicts</li>
+<li><strong>debug ip dhcp server events</strong> - Monitor DHCP requests</li>
+<li>Verify helper-address on remote subnets</li>
+<li>Check excluded addresses and pool ranges</li>
+</ul>`
+            },
+            {
+                category: 'troubleshooting',
+                front: 'Troubleshoot routing table issues - key commands',
+                back: `<ul>
+<li><strong>show ip route</strong> - Display routing table</li>
+<li><strong>show ip route [network]</strong> - Specific route details</li>
+<li><strong>show ip protocols</strong> - Routing protocol status</li>
+<li><strong>traceroute [destination]</strong> - Trace packet path</li>
+<li><strong>ping [destination]</strong> - Test connectivity</li>
+<li>Check administrative distance and metrics</li>
+</ul>`
+            },
+            {
+                category: 'cisco',
+                front: 'Configure BGP basic setup',
+                back: `<pre>Router(config)# router bgp 65001
+Router(config-router)# bgp router-id 1.1.1.1
+Router(config-router)# neighbor 203.0.113.2 remote-as 65002
+Router(config-router)# neighbor 203.0.113.2 description ISP_CONNECTION
+Router(config-router)# network 192.168.1.0 mask 255.255.255.0
+Router(config-router)# no auto-summary</pre>`
+            },
+            {
+                category: 'cisco',
+                front: 'Configure port security on Cisco switch',
+                back: `<pre>Switch(config)# interface fastethernet 0/1
+Switch(config-if)# switchport mode access
+Switch(config-if)# switchport port-security
+Switch(config-if)# switchport port-security maximum 2
+Switch(config-if)# switchport port-security mac-address sticky
+Switch(config-if)# switchport port-security violation restrict</pre>`
+            },
+            {
+                category: 'troubleshooting',
+                front: 'How to troubleshoot EtherChannel issues?',
+                back: `<ul>
+<li><strong>show etherchannel summary</strong> - Check bundle status</li>
+<li><strong>show interfaces port-channel [number]</strong> - Verify logical interface</li>
+<li><strong>show spanning-tree</strong> - Check for STP issues</li>
+<li>Verify matching configuration on both sides</li>
+<li>Check for duplex/speed mismatches</li>
+<li>Ensure same VLAN configuration on member ports</li>
+</ul>`
+            },
+            {
+                category: 'cisco',
+                front: 'Configure VTP (VLAN Trunking Protocol)',
+                back: `<pre># VTP Server
+Switch(config)# vtp mode server
+Switch(config)# vtp domain COMPANY
+Switch(config)# vtp password cisco123
+Switch(config)# vtp version 2
+
+# VTP Client
+Switch(config)# vtp mode client
+Switch(config)# vtp domain COMPANY
+Switch(config)# vtp password cisco123</pre>`
+            },
+            {
+                category: 'troubleshooting',
+                front: 'Troubleshoot Spanning Tree convergence issues',
+                back: `<strong>Commands:</strong>
+<ul>
+<li><strong>show spanning-tree</strong> - Overall STP status</li>
+<li><strong>show spanning-tree vlan [id]</strong> - Per-VLAN details</li>
+<li><strong>show spanning-tree interface [interface]</strong> - Port status</li>
+</ul>
+<strong>Issues:</strong> Slow convergence, root bridge placement, port costs, duplex mismatches, BPDU Guard violations`
+            }
+        ];
+
+        let currentIndex = 0;
+        let isFlipped = false;
+        let studiedCards = new Set();
+        let filteredCards = [...flashcards];
+        let currentCategory = 'all';
+
+        function updateCard() {
+            const card = filteredCards[currentIndex];
+            if (!card) return;
+
+            document.getElementById('frontContent').innerHTML = `<h2>${card.front}</h2>`;
+            document.getElementById('backContent').innerHTML = `<p>${card.back}</p>`;
+            document.getElementById('currentCard').textContent = currentIndex + 1;
+            document.getElementById('totalCards').textContent = filteredCards.length;
+            
+            if (isFlipped) {
+                document.getElementById('flashcard').classList.remove('flipped');
+                isFlipped = false;
+            }
+            
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const progress = (studiedCards.size / flashcards.length) * 100;
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = progress + '%';
+            progressBar.textContent = `${studiedCards.size} / ${flashcards.length}`;
+            document.getElementById('studiedCards').textContent = studiedCards.size;
+        }
+
+        function flipCard() {
+            const flashcard = document.getElementById('flashcard');
+            flashcard.classList.toggle('flipped');
+            isFlipped = !isFlipped;
+            
+            if (isFlipped) {
+                studiedCards.add(filteredCards[currentIndex]);
+                updateProgress();
+            }
+        }
+
+        function nextCard() {
+            currentIndex = (currentIndex + 1) % filteredCards.length;
+            updateCard();
+        }
+
+        function prevCard() {
+            currentIndex = (currentIndex - 1 + filteredCards.length) % filteredCards.length;
+            updateCard();
+        }
+
+        function shuffleCards() {
+            for (let i = filteredCards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [filteredCards[i], filteredCards[j]] = [filteredCards[j], filteredCards[i]];
+            }
+            currentIndex = 0;
+            updateCard();
+        }
+
+        function filterCategory(category) {
+            // Update active button
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            currentCategory = category;
+            if (category === 'all') {
+                filteredCards = [...flashcards];
+            } else {
+                filteredCards = flashcards.filter(card => card.category === category);
+            }
+            
+            currentIndex = 0;
+            updateCard();
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowLeft':
+                    prevCard();
+                    break;
+                case 'ArrowRight':
+                    nextCard();
+                    break;
+                case ' ':
+                    e.preventDefault();
+                    flipCard();
+                    break;
+                case 's':
+                    shuffleCards();
+                    break;
+            }
+        });
+
+        // Initialize
+        updateCard();
+        updateProgress();
+    </script>
+</body>
+</html>
